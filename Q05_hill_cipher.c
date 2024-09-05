@@ -18,7 +18,7 @@ void hillCipherEncrypt(char message[], int **keyMatrix, int size, char cipherMes
     for (int k = 0; k < paddedLength; k += size) {
         int messageVector[size];
         for (int i = 0; i < size; i++) {
-            messageVector[i] = message[k + i] - 'A';
+            messageVector[i] = message[k + i] - 'A';  // Convert character to numerical value
         }
 
         int cipherVector[size];
@@ -27,20 +27,20 @@ void hillCipherEncrypt(char message[], int **keyMatrix, int size, char cipherMes
             for (int j = 0; j < size; j++) {
                 cipherVector[i] += keyMatrix[i][j] * messageVector[j];
             }
-            cipherVector[i] %= 26;
+            cipherVector[i] %= 26;  // Mod 26 for wrapping around the alphabet
         }
 
         for (int i = 0; i < size; i++) {
-            cipherMessage[k + i] = cipherVector[i] + 'A';
+            cipherMessage[k + i] = cipherVector[i] + 'A';  // Convert numerical value back to character
         }
     }
 
-    cipherMessage[paddedLength] = '\0';
+    cipherMessage[paddedLength] = '\0';  // Null-terminate the cipher message
 }
 
 int main() {
     int size;
-    printf("Enter the size of the key matrix (e.g., 2 for 2x2): ");
+    printf("Enter the size of the key matrix (e.g., 2 for 2x2, 3 for 3x3): ");
     scanf("%d", &size);
 
     char message[100];
@@ -50,7 +50,7 @@ int main() {
     scanf("%s", message);
 
     // Dynamically allocate memory for the key matrix
-    int *keyMatrix = (int *)malloc(size * sizeof(int *));
+    int **keyMatrix = (int **)malloc(size * sizeof(int *));
     for (int i = 0; i < size; i++) {
         keyMatrix[i] = (int *)malloc(size * sizeof(int));
     }
@@ -62,6 +62,7 @@ int main() {
         }
     }
 
+    // Call encryption function
     hillCipherEncrypt(message, keyMatrix, size, cipherMessage);
 
     printf("Encrypted message: %s\n", cipherMessage);
