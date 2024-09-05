@@ -1,116 +1,132 @@
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <stdlib.h>
 
-#define MAX 100
+// Function to encrypt a message using Rail Fence Cipher
+void encryptRailFence(char *text, int key, char *result) {
+    int len = strlen(text);
+    char rail[key][len];
 
-// Function to encrypt plaintext using Rail Fence Cipher
-void railFenceEncrypt(char plaintext[], int rails, char ciphertext[]) {
-    int len = strlen(plaintext);
-    char grid[rails][MAX];
-    
-    // Initialize the grid with spaces
-    for (int i = 0; i < rails; i++) {
+    // Fill the rail matrix with '\n' to mark unused spaces
+    for (int i = 0; i < key; i++) {
         for (int j = 0; j < len; j++) {
-            grid[i][j] = ' ';
+            rail[i][j] = '\n';
         }
     }
-    
-    int row = 0;
-    int step = 1;
-    
-    // Fill the grid in a zigzag pattern
+
+    // Mark the places to put text characters
+    int row = 0, col = 0;
+    int dir_down = 0;  // Flag to change the direction
+
     for (int i = 0; i < len; i++) {
-        grid[row][i] = plaintext[i];
-        if (row == 0 || row == rails - 1) {
-            step = -step;
+        // Reverse direction if we are at the top or bottom row
+        if (row == 0 || row == key - 1) {
+            dir_down = !dir_down;
         }
-        row += step;
+        // Fill the corresponding alphabet
+        rail[row][col++] = text[i];
+
+        // Move to the next row in the zig-zag pattern
+        if (dir_down) {
+            row++;
+        } else {
+            row--;
+        }
     }
-    
-    // Read the grid row by row
+
+    // Construct the cipher by reading the rail matrix
     int index = 0;
-    for (int i = 0; i < rails; i++) {
+    for (int i = 0; i < key; i++) {
         for (int j = 0; j < len; j++) {
-            if (grid[i][j] != ' ') {
-                ciphertext[index++] = grid[i][j];
+            if (rail[i][j] != '\n') {
+                result[index++] = rail[i][j];
             }
         }
     }
-    ciphertext[index] = '\0';
+    result[index] = '\0';  // Null-terminate the result
 }
 
-// Function to decrypt ciphertext using Rail Fence Cipher
-void railFenceDecrypt(char ciphertext[], int rails, char plaintext[]) {
-    int len = strlen(ciphertext);
-    char grid[rails][MAX];
-    
-    // Initialize the grid with spaces
-    for (int i = 0; i < rails; i++) {
+// Function to decrypt a Rail Fence Cipher
+void decryptRailFence(char *cipher, int key, char *result) {
+    int len = strlen(cipher);
+    char rail[key][len];
+
+    // Fill the rail matrix with '\n' to mark unused spaces
+    for (int i = 0; i < key; i++) {
         for (int j = 0; j < len; j++) {
-            grid[i][j] = ' ';
+            rail[i][j] = '\n';
         }
     }
-    
-    int row = 0;
-    int step = 1;
-    
-    // Mark the positions in the grid where ciphertext characters will go
+
+    // Mark the positions in zig-zag pattern where the text will be placed
+    int row = 0, col = 0;
+    int dir_down = 0;  // Flag to change the direction
+
     for (int i = 0; i < len; i++) {
-        grid[row][i] = '*';  // Temporary mark
-        if (row == 0 || row == rails - 1) {
-            step = -step;
+        if (row == 0 || row == key - 1) {
+            dir_down = !dir_down;
         }
-        row += step;
+        rail[row][col++] = '*';  // Mark positions with '*'
+
+        if (dir_down) {
+            row++;
+        } else {
+            row--;
+        }
     }
-    
-    // Fill the grid with ciphertext
+
+    // Now fill the rail matrix with the cipher text
     int index = 0;
-    for (int i = 0; i < rails; i++) {
+    for (int i = 0; i < key; i++) {
         for (int j = 0; j < len; j++) {
-            if (grid[i][j] == '*') {
-                grid[i][j] = ciphertext[index++];
+            if (rail[i][j] == '*' && index < len) {
+                rail[i][j] = cipher[index++];
             }
         }
     }
-    
-    // Read the grid row by row to get plaintext
+
+    // Now read the matrix in zig-zag manner to get the original text
     row = 0;
-    step = 1;
-    index = 0;
+    col = 0;
+    dir_down = 0;  // Reset the direction flag
+
     for (int i = 0; i < len; i++) {
-        plaintext[index++] = grid[row][i];
-        if (row == 0 || row == rails - 1) {
-            step = -step;
+        if (row == 0 || row == key - 1) {
+            dir_down = !dir_down;
         }
-        row += step;
+        result[i] = rail[row][col++];
+
+        if (dir_down) {
+            row++;
+        } else {
+            row--;
+        }
     }
-    plaintext[index] = '\0';
+    result[len] = '\0';  // Null-terminate the result
 }
 
+// Driver code
 int main() {
-    char plaintext[MAX], ciphertext[MAX], decryptedtext[MAX];
-    int rails;
-    
-    printf("Enter the plaintext: ");
-    fgets(plaintext, sizeof(plaintext), stdin);
-    
-    // Remove newline character from plaintext if present
-    size_t len = strlen(plaintext);
-    if (len > 0 && plaintext[len-1] == '\n') {
-        plaintext[len-1] = '\0';
-    }
-    
-    printf("Enter number of rails: ");
-    scanf("%d", &rails);
-    
-    // Encrypt the plaintext
-    railFenceEncrypt(plaintext, rails, ciphertext);
-    printf("Encrypted ciphertext: %s\n", ciphertext);
-    
-    // Decrypt the ciphertext
-    railFenceDecrypt(ciphertext, rails, decryptedtext);
-    printf("Decrypted plaintext: %s\n", decryptedtext);
-    
+    int key;
+    char text[100];
+    char encrypted[100];
+    char decrypted[100];
+
+    // Get input from the user
+    printf("Enter the message to encrypt: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0';  // Remove the newline character at the end
+
+    printf("Enter the key (number of rails): ");
+    scanf("%d", &key);
+
+    // Encryption
+    encryptRailFence(text, key, encrypted);
+    printf("\nEncrypted Message: %s\n", encrypted);
+
+    // Decryption
+    decryptRailFence(encrypted, key, decrypted);
+    printf("Decrypted Message: %s\n", decrypted);
+
     return 0;
 }
